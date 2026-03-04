@@ -61,7 +61,6 @@ export default function ArticlePanel({
               srcDoc={article.html}
               title="文章预览"
               className="w-full h-full border-0"
-              sandbox="allow-same-origin"
             />
           </div>
         )}
