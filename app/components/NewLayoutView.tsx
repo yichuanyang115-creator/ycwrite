@@ -19,6 +19,8 @@ interface NewLayoutViewProps {
   currentView: 'thinking' | 'research' | 'article'
   onViewChange: (view: 'thinking' | 'research' | 'article') => void
   onSelectArticle: (id: string) => void
+  onNewArticle: () => void
+  onDeleteArticle: (id: string) => void
   onCopy: () => void
   onBack: () => void
 }
@@ -29,6 +31,8 @@ export default function NewLayoutView({
   currentView,
   onViewChange,
   onSelectArticle,
+  onNewArticle,
+  onDeleteArticle,
   onCopy,
   onBack
 }: NewLayoutViewProps) {
@@ -42,6 +46,8 @@ export default function NewLayoutView({
         articles={articles}
         currentArticleId={article.id}
         onSelectArticle={onSelectArticle}
+        onNewArticle={onNewArticle}
+        onDeleteArticle={onDeleteArticle}
       />
 
       {/* 主内容区 */}
