@@ -28,7 +28,12 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+        const client = new Anthropic({
+          apiKey: process.env.ANTHROPIC_API_KEY!,
+          ...(process.env.ANTHROPIC_BASE_URL
+            ? { baseURL: process.env.ANTHROPIC_BASE_URL }
+            : {}),
+        })
         const cfg = LENGTH_CONFIG[params.length]
 
         // ── 阶段1：调研 ──────────────────────────────────────
