@@ -12,7 +12,7 @@ import { buildHtml } from '@/lib/htmlBuilder'
 
 export const maxDuration = 300 // Vercel Pro: 5分钟
 
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929'
 
 export async function POST(req: NextRequest) {
   const params: ArticleParams = await req.json()
