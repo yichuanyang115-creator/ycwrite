@@ -24,9 +24,9 @@ const AUDIENCE_DETAIL: Record<string, string> = {
 }
 
 export const LENGTH_CONFIG = {
-  short:  { label: '短文',  range: '1000-2000字', images: '1-2', minTokens: 1500, maxTokens: 3000 },
-  medium: { label: '中篇',  range: '2000-5000字', images: '2-3', minTokens: 3000, maxTokens: 6000 },
-  long:   { label: '长篇',  range: '5000字以上',  images: '5张+', minTokens: 5000, maxTokens: 8000 },
+  short:  { label: '短文',  range: '1000-2000字', images: '1', minTokens: 1000, maxTokens: 2500 },
+  medium: { label: '中篇',  range: '2000-5000字', images: '2', minTokens: 2000, maxTokens: 6000 },
+  long:   { label: '长篇',  range: '5000字以上',  images: '3', minTokens: 5000, maxTokens: 12000 },
 }
 
 export function buildResearchPrompt(params: ArticleParams): string {
@@ -91,5 +91,11 @@ ${outline}
 众所周知 / 让我们看看 / 首先其次最后（并列时）/ 简单来说
 ${params.viewpoint ? `\n【核心观点】文章须体现：${params.viewpoint}` : ''}
 
-直接输出完整 Markdown 文章，不要任何前言或说明。`
+【关键要求】
+1. 每个章节标题后必须有完整的段落内容，不能只有标题
+2. 文章必须包含完整的 CLOSE 结尾部分（总结+行动建议）
+3. 不要在标题后立即结束，确保每个标题下都有实质内容
+4. 结尾必须给出具体可执行的建议，不能以标题结束
+
+直接输出完整 Markdown 文章，确保结构完整。`
 }

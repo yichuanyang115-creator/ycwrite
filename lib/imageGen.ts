@@ -33,27 +33,38 @@ async function callImageAPI(prompt: string): Promise<string> {
   const baseUrl = process.env.IMAGE_API_BASE ?? 'https://api.apicore.ai/v1'
   const model = process.env.IMAGE_MODEL ?? 'gemini-2.5-flash-image-hd'
 
-  if (!apiKey) return createPlaceholderSvg(prompt)
-
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      n: 1,
-    }),
-  })
-
-  if (!res.ok) {
-    throw new Error(`Image API ${res.status}: ${await res.text()}`)
+  if (!apiKey) {
+    console.log('No IMAGE_API_KEY found, using placeholder')
+    return createPlaceholderSvg(prompt)
   }
 
-  const json = await res.json()
-  return await extractImage(json, prompt)
+  try {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        n: 1,
+      }),
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error(`Image API error ${res.status}:`, errorText)
+      throw new Error(`Image API ${res.status}: ${errorText}`)
+    }
+
+    const json = await res.json()
+    console.log('Image API response:', JSON.stringify(json).substring(0, 200))
+    return await extractImage(json, prompt)
+  } catch (error) {
+    console.error('Image generation failed:', error)
+    return createPlaceholderSvg(prompt)
+  }
 }
 
 async function extractImage(json: Record<string, unknown>, fallbackPrompt: string): Promise<string> {
@@ -122,9 +133,14 @@ export function replaceImagePlaceholders(
   images: Record<string, string>
 ): string {
   let index = 0
-  return markdown.replace(/\[IMAGE:\s*[^\]]+\]/g, () => {
+  let result = markdown.replace(/\[IMAGE:\s*[^\]]+\]/g, () => {
     const id = `img_${String(++index).padStart(2, '0')}`
     const src = images[id]
-    return src ? `![配图${index}](${src})` : `![配图${index}（生成失败）]()`
+    return src ? `![配图${index}](${src})` : ''
   })
+
+  // 再次清理任何残留的 IMAGE 占位符（防御性处理）
+  result = result.replace(/\[IMAGE:[^\]]*\]/gi, '')
+
+  return result
 }
