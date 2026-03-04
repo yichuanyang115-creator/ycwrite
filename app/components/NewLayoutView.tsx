@@ -22,6 +22,7 @@ interface NewLayoutViewProps {
   onNewArticle: () => void
   onDeleteArticle: (id: string) => void
   onCopy: () => void
+  onExportPDF: () => void
   onBack: () => void
 }
 
@@ -34,6 +35,7 @@ export default function NewLayoutView({
   onNewArticle,
   onDeleteArticle,
   onCopy,
+  onExportPDF,
   onBack
 }: NewLayoutViewProps) {
   const readingMinutes = Math.max(1, Math.round(article.wordCount / 400))
@@ -63,6 +65,7 @@ export default function NewLayoutView({
           currentView={currentView}
           onViewChange={onViewChange}
           onCopy={onCopy}
+          onExportPDF={onExportPDF}
         />
 
         {/* 编辑器工作区 */}
