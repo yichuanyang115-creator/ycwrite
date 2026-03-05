@@ -63,7 +63,8 @@ export default function Home() {
     setOutlineData('')
 
     try {
-      const res = await fetch('/api/generate', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001'
+      const res = await fetch(`${backendUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic: topic.trim(), audience, length, viewpoint: viewpoint.trim() || undefined }),
