@@ -18,9 +18,9 @@ AUDIENCE_TYPES = {
 
 # 文章长度配置
 LENGTH_CONFIG = {
-    'short': {'label': '短文', 'range': '1000-2000字', 'images': 1, 'tokens': 2500},
-    'medium': {'label': '中篇', 'range': '2000-5000字', 'images': 2, 'tokens': 6000},
-    'long': {'label': '长篇', 'range': '5000字以上', 'images': 3, 'tokens': 12000}
+    'short': {'label': '短文', 'range': '1000-2000字', 'images': 1, 'tokens': 4000, 'words': 1500},
+    'medium': {'label': '中篇', 'range': '2000-5000字', 'images': 2, 'tokens': 8000, 'words': 3500},
+    'long': {'label': '长篇', 'range': '5000字以上', 'images': 3, 'tokens': 16000, 'words': 6000}
 }
 
 
