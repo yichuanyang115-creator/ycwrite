@@ -1,0 +1,11 @@
+{
+  "image_api": {
+    "api_key": "sk-YG7XqNuYtybjzGLwq5SHCVONFJcYZ69wSITuyuV6QACgOYcM",
+    "base_url": "https://api.apicore.ai/v1",
+    "model": "gemini-2.5-flash-image-hd",
+    "output_format": "png"
+  },
+  "output": {
+    "images_dir": "./output/images"
+  }
+}
