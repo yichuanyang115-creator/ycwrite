@@ -15,6 +15,7 @@ import os
 import re
 import sys
 import json
+from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -199,11 +200,29 @@ class WriteMaster:
 
         topic = params['topic']
 
+        # 触发思考流事件
+        self.event_callback('thinking', {
+            'stage': 'research',
+            'timestamp': datetime.now().isoformat(),
+            'type': 'analysis',
+            'content': f"开始调研主题：{topic}",
+            'metadata': {'audience': params['audience'], 'length': params['length']}
+        })
+
         # 并行搜索
         search_results = self.mcp_tools.parallel_search(topic)
 
         # 打分和筛选
         top_articles = score_and_filter(search_results, topic, top_n=10)
+
+        # 触发思考流事件
+        self.event_callback('thinking', {
+            'stage': 'research',
+            'timestamp': datetime.now().isoformat(),
+            'type': 'data',
+            'content': f"找到 {len(top_articles)} 篇相关文章",
+            'metadata': {'article_count': len(top_articles)}
+        })
 
         # 使用 Claude 生成调研摘要
         print("\n📝 生成调研摘要...")
@@ -307,6 +326,15 @@ class WriteMaster:
 
         print("⏳ 正在调用 AI 生成大纲...")
 
+        # 触发思考流事件
+        self.event_callback('thinking', {
+            'stage': 'outline',
+            'timestamp': datetime.now().isoformat(),
+            'type': 'planning',
+            'content': f"基于调研结果生成文章大纲",
+            'metadata': {'target_audience': audience_label, 'length': length}
+        })
+
         prompt = f"""你是一位专业的AI科技内容策划，擅长为{audience_label}撰写高质量科普文章。
 
 ## 写作任务
@@ -398,6 +426,15 @@ class WriteMaster:
             )
 
         print("⏳ 正在调用 AI 写作正文（可能需要1-2分钟）...")
+
+        # 触发思考流事件
+        self.event_callback('thinking', {
+            'stage': 'writing',
+            'timestamp': datetime.now().isoformat(),
+            'type': 'generation',
+            'content': f"开始撰写正文，目标字数：{length_cfg['words']}字",
+            'metadata': {'target_words': length_cfg['words'], 'images': length_cfg['images']}
+        })
 
         system_prompt = """你是一位顶级AI科技科普作家，专注于为非技术读者撰写有深度、有温度的技术科普文章。
 
@@ -629,6 +666,16 @@ A clean flat design diagram showing AI agent workflow. Three connected component
         else:
             # 步骤2：生成英文提示词
             print("⏳ 正在生成图片提示词...")
+
+            # 触发思考流事件
+            self.event_callback('thinking', {
+                'stage': 'images',
+                'timestamp': datetime.now().isoformat(),
+                'type': 'generation',
+                'content': f"准备生成 {len(markers)} 张配图",
+                'metadata': {'image_count': len(markers)}
+            })
+
             prompts = self._generate_image_prompts(markers, article)
             print(f"✅ 提示词生成完成，共 {len(prompts)} 张")
 
@@ -693,6 +740,15 @@ A clean flat design diagram showing AI agent workflow. Three connected component
         print("=" * 60)
 
         self.progress.update_stage('formatting', 'in_progress')
+
+        # 触发思考流事件
+        self.event_callback('thinking', {
+            'stage': 'formatting',
+            'timestamp': datetime.now().isoformat(),
+            'type': 'processing',
+            'content': "开始富文本排版和HTML生成",
+            'metadata': {'image_count': len(images)}
+        })
 
         html_path = self.output_dir / 'article.html'
         md_path = self.output_dir / 'article.md'
