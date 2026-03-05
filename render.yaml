@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: write-master-api
+    runtime: python
+    rootDir: write-master
+    buildCommand: pip install -r requirements.txt
+    startCommand: python api_server.py
+    plan: free
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_BASE_URL
+        sync: false
+      - key: ANTHROPIC_MODEL
+        sync: false
