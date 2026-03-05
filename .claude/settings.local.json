@@ -52,7 +52,23 @@
       "Bash(done)",
       "Bash(curl -I https://www.ycwrite.online/)",
       "Bash(curl -s https://www.ycwrite.online/)",
-      "Bash(chmod +x /Users/yangjingchuan/project/skills_adding/write_master/deploy-backend.sh)"
+      "Bash(chmod +x /Users/yangjingchuan/project/skills_adding/write_master/deploy-backend.sh)",
+      "Bash(du -sh /Users/yangjingchuan/project/skills_adding/write_master/*)",
+      "Bash(ls -lah /Users/yangjingchuan/project/skills_adding/write_master/*.md /Users/yangjingchuan/project/skills_adding/write_master/*.sh /Users/yangjingchuan/project/skills_adding/write_master/*.html)",
+      "Bash(ls -lah *.md *.sh)",
+      "Bash(curl -X POST http://localhost:8001/api/generate -H \"Content-Type: application/json\" -d '{:*)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(brew install cloudflared)",
+      "Bash(curl -L --output cloudflared.pkg https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.pkg)",
+      "Bash(sudo installer -pkg cloudflared.pkg -target /)",
+      "Bash(curl -s http://localhost:4040/api/tunnels)",
+      "Bash(npm install -g localtunnel)",
+      "Bash(npm install localtunnel)",
+      "Bash(git ls-tree --name-only origin/main)",
+      "Bash(curl -s https://sharp-teams-clean.loca.lt/health)",
+      "Bash(curl -sv https://sharp-teams-clean.loca.lt/health)",
+      "Bash(curl -s -X POST https://write-master-api.onrender.com/api/generate -H \"Content-Type: application/json\" -d '{\"\"topic\"\":\"\"AI Agent\"\",\"\"audience\"\":\"\"pm\"\",\"\"length\"\":\"\"short\"\"}' --max-time 30 -N)",
+      "Bash(curl -v -X POST https://write-master-api.onrender.com/api/generate -H \"Content-Type: application/json\" -d '{\"\"topic\"\":\"\"test\"\",\"\"audience\"\":\"\"pm\"\",\"\"length\"\":\"\"short\"\"}' --max-time 20)"
     ]
   }
 }

@@ -11,25 +11,24 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
-import anthropic
+from openai import OpenAI
 
 
 class MCPTools:
     """MCP 工具管理类"""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
-        self.base_url = os.getenv('ANTHROPIC_BASE_URL')
+        self.api_key = api_key or os.getenv('ZHIPU_API_KEY')
+        self.base_url = 'https://open.bigmodel.cn/api/paas/v4/'
 
         if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY 未设置")
+            raise ValueError("ZHIPU_API_KEY 未设置")
 
-        client_config = {'api_key': self.api_key}
-        if self.base_url:
-            client_config['base_url'] = self.base_url
-
-        self.client = anthropic.Anthropic(**client_config)
-        self.model = os.getenv('ANTHROPIC_MODEL', 'claude-opus-4-5')
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url
+        )
+        self.model = os.getenv('ZHIPU_MODEL', 'glm-4.5')
 
     # ------------------------------------------------------------------
     # 公共搜索接口
@@ -132,42 +131,10 @@ class MCPTools:
 
     def _try_builtin_web_search(self, query: str, limit: int) -> List[Dict]:
         """
-        尝试使用 Anthropic 内置 web_search 工具（仅官方 API 支持）。
-        成功返回结果列表；失败返回空列表。
+        尝试使用内置 web_search 工具（智谱 API 不支持，直接返回空）。
         """
-        try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=3000,
-                tools=[{"type": "web_search_20250305", "name": "web_search"}],
-                messages=[{
-                    'role': 'user',
-                    'content': (
-                        f'请搜索关于"{query}"的最新中文技术文章，'
-                        f'返回 {limit} 篇最相关的结果。'
-                        f'对每篇文章给出：标题、摘要（100字）、来源网站、发布时间。'
-                    )
-                }]
-            )
-
-            # 解析 tool_use 块中的搜索结果
-            results = []
-            for block in response.content:
-                if block.type == 'tool_result':
-                    raw = block.content if isinstance(block.content, str) else json.dumps(block.content)
-                    parsed = self._parse_search_json(raw)
-                    results.extend(parsed)
-                elif block.type == 'text':
-                    # 有时模型直接在 text 中汇总结果
-                    parsed = self._parse_search_json(block.text)
-                    if parsed:
-                        results.extend(parsed)
-
-            return results[:limit]
-
-        except Exception:
-            # 代理或旧版 API 不支持内置工具，静默失败
-            return []
+        # 智谱 API 不支持内置 web_search 工具，直接降级到模型知识
+        return []
 
     def _try_mcp_server(self, server_type: str, query: str, limit: int) -> Optional[List[Dict]]:
         """
@@ -292,13 +259,13 @@ class MCPTools:
 - 如果对某些具体文章不确定，可以基于该主题生成合理的参考性内容"""
 
         try:
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=2500,
                 messages=[{'role': 'user', 'content': prompt}]
             )
 
-            content = response.content[0].text.strip()
+            content = response.choices[0].message.content.strip()
             articles = self._parse_search_json(content)
             return articles[:limit]
 

@@ -47,7 +47,7 @@ from scripts.markdown_to_html import (
     replace_image_placeholders, markdown_to_html_content,
     build_html, extract_title, read_file
 )
-import anthropic
+from openai import OpenAI
 
 
 class WriteMaster:
@@ -56,20 +56,19 @@ class WriteMaster:
     def __init__(self, no_review=False, event_callback=None):
         """初始化"""
         self.config = load_config()
-        self.api_key = os.getenv('ANTHROPIC_API_KEY')
-        self.base_url = os.getenv('ANTHROPIC_BASE_URL')
+        self.api_key = os.getenv('ZHIPU_API_KEY')
         self.no_review = no_review
         self.event_callback = event_callback or (lambda t, d: None)
 
         if not self.api_key:
-            raise ValueError("请设置 ANTHROPIC_API_KEY 环境变量")
+            raise ValueError("请设置 ZHIPU_API_KEY 环境变量")
 
-        # 初始化 Anthropic 客户端
-        client_config = {'api_key': self.api_key}
-        if self.base_url:
-            client_config['base_url'] = self.base_url
-
-        self.client = anthropic.Anthropic(**client_config)
+        # 初始化智谱 OpenAI 客户端
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url='https://open.bigmodel.cn/api/paas/v4/'
+        )
+        self.model = os.getenv('ZHIPU_MODEL', 'glm-4.5')
         self.mcp_tools = MCPTools(self.api_key)
         self.progress = ProgressTracker()
         self.review_nodes = create_review_nodes()
@@ -226,13 +225,13 @@ class WriteMaster:
 
 输出要求: 500-700字摘要，多用具体数字和案例。"""
 
-        response = self.client.messages.create(
-            model=os.getenv('ANTHROPIC_MODEL', '[REDACTED]'),
+        response = self.client.chat.completions.create(
+            model=self.model,
             max_tokens=1500,
             messages=[{'role': 'user', 'content': prompt}]
         )
 
-        research_summary = response.content[0].text
+        research_summary = response.choices[0].message.content
 
         research_data = {
             'summary': research_summary,
@@ -339,13 +338,13 @@ class WriteMaster:
 
 请直接输出大纲，不要其他解释："""
 
-        response = self.client.messages.create(
-            model=os.getenv('ANTHROPIC_MODEL', 'claude-opus-4-5'),
+        response = self.client.chat.completions.create(
+            model=self.model,
             max_tokens=2000,
             messages=[{'role': 'user', 'content': prompt}]
         )
 
-        outline = response.content[0].text.strip()
+        outline = response.choices[0].message.content.strip()
         print(f"✅ 大纲生成完成（{len(outline)} 字符）")
 
         # 审核节点 3
@@ -441,14 +440,16 @@ class WriteMaster:
 5. 目标受众是{audience_label}，避免过度技术细节，强调商业/产品价值
 6. 直接输出 Markdown 格式的完整文章，不要任何前言或解释"""
 
-        response = self.client.messages.create(
-            model=os.getenv('ANTHROPIC_MODEL', 'claude-opus-4-5'),
+        response = self.client.chat.completions.create(
+            model=self.model,
             max_tokens=length_cfg['tokens'],
-            system=system_prompt,
-            messages=[{'role': 'user', 'content': user_prompt}]
+            messages=[
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt}
+            ]
         )
 
-        article = response.content[0].text.strip()
+        article = response.choices[0].message.content.strip()
         word_count = len(article.replace(' ', '').replace('\n', ''))
         print(f"✅ 正文写作完成（约 {word_count} 字符）")
 
@@ -543,13 +544,13 @@ class WriteMaster:
 ## 英文提示词示例
 A clean flat design diagram showing AI agent workflow. Three connected components: input processing box on left, central reasoning engine with neural network icon, output/action module on right. Connected by glowing arrows. Dark background #0F172A, main colors #6366F1 and #22D3EE. Minimalist geometric style. No text, no photorealistic elements. 16:9 aspect ratio. High quality, professional tech blog illustration."""
 
-        response = self.client.messages.create(
-            model=os.getenv('ANTHROPIC_MODEL', 'claude-opus-4-5'),
+        response = self.client.chat.completions.create(
+            model=self.model,
             max_tokens=1500,
             messages=[{'role': 'user', 'content': prompt}]
         )
 
-        content = response.content[0].text.strip()
+        content = response.choices[0].message.content.strip()
 
         # 解析 JSON
         content = re.sub(r'```(?:json)?\s*', '', content).rstrip('`').strip()
