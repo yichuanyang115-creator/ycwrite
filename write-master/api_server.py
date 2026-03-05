@@ -75,13 +75,16 @@ async def generate_article(request: GenerateRequest):
             # 事件回调队列
             event_queue = asyncio.Queue()
 
+            # 获取事件循环（需要在 event_callback 定义之前）
+            loop = asyncio.get_event_loop()
+
             def event_callback(event_type: str, data: dict):
-                """WriteMaster 事件回调"""
-                asyncio.create_task(event_queue.put((event_type, data)))
+                """WriteMaster 事件回调 - 线程安全版本"""
+                # 使用 call_soon_threadsafe 从线程池线程安全地调度到主事件循环
+                loop.call_soon_threadsafe(event_queue.put_nowait, (event_type, data))
 
             # 创建 WriteMaster 实例
             writer = WriteMaster(no_review=True, event_callback=event_callback)
-            loop = asyncio.get_event_loop()
 
             # 阶段 1: 参数收集（前端没有这个阶段，跳过）
             params = await loop.run_in_executor(None, writer.stage1_collect_params, user_input)
