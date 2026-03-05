@@ -686,7 +686,7 @@ A clean flat design diagram showing AI agent workflow. Three connected component
         self.progress.update_stage('images', 'completed')
         return images
 
-    def stage6_formatting(self, article: str, images: list) -> dict:
+    def stage6_formatting(self, article: str, images: list, research_data: dict = None, outline: str = '') -> dict:
         """阶段 6: 富文本排版"""
         print("\n" + "=" * 60)
         print("🎨 阶段 6: 富文本排版")
@@ -771,7 +771,9 @@ A clean flat design diagram showing AI agent workflow. Three connected component
             'html': html_content,
             'title': extract_title(article),
             'wordCount': final_output.get('word_count', 0),
-            'imageCount': final_output.get('image_count', 0)
+            'imageCount': final_output.get('image_count', 0),
+            'research': research_data.get('summary', '') if research_data else '',
+            'outline': outline
         })
 
         return final_output

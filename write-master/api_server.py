@@ -141,7 +141,7 @@ async def generate_article(request: GenerateRequest):
 
             # 阶段 6: 富文本排版
             yield sse_event('stage', {'id': 'formatting', 'status': 'active'})
-            final_output = await loop.run_in_executor(None, writer.stage6_formatting, article, images)
+            final_output = await loop.run_in_executor(None, writer.stage6_formatting, article, images, research_data, outline)
             # 给一点时间让 event_callback 完成
             await asyncio.sleep(0.1)
             done_sent = False
