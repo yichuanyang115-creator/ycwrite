@@ -81,13 +81,14 @@ async def generate_article(request: GenerateRequest):
 
             # 创建 WriteMaster 实例
             writer = WriteMaster(no_review=True, event_callback=event_callback)
+            loop = asyncio.get_event_loop()
 
             # 阶段 1: 参数收集（前端没有这个阶段，跳过）
-            params = writer.stage1_collect_params(user_input)
+            params = await loop.run_in_executor(None, writer.stage1_collect_params, user_input)
 
             # 阶段 2: 主题调研
             yield sse_event('stage', {'id': 'research', 'status': 'active'})
-            research_data = writer.stage2_research(params)
+            research_data = await loop.run_in_executor(None, writer.stage2_research, params)
             while not event_queue.empty():
                 evt_type, evt_data = await event_queue.get()
                 if evt_type == 'research_complete':
@@ -96,7 +97,7 @@ async def generate_article(request: GenerateRequest):
 
             # 阶段 3: 大纲生成
             yield sse_event('stage', {'id': 'outline', 'status': 'active'})
-            outline = writer.stage3_outline(params, research_data)
+            outline = await loop.run_in_executor(None, writer.stage3_outline, params, research_data)
             while not event_queue.empty():
                 evt_type, evt_data = await event_queue.get()
                 if evt_type == 'outline_complete':
@@ -105,7 +106,7 @@ async def generate_article(request: GenerateRequest):
 
             # 阶段 4: 正文写作
             yield sse_event('stage', {'id': 'writing', 'status': 'active'})
-            article = writer.stage4_writing(params, research_data, outline)
+            article = await loop.run_in_executor(None, writer.stage4_writing, params, research_data, outline)
             while not event_queue.empty():
                 evt_type, evt_data = await event_queue.get()
                 if evt_type == 'stream':
@@ -114,7 +115,6 @@ async def generate_article(request: GenerateRequest):
 
             # 阶段 5: 配图生成（在线程池中执行，避免阻塞事件循环）
             yield sse_event('stage', {'id': 'images', 'status': 'active'})
-            loop = asyncio.get_event_loop()
 
             # 启动图片生成任务（线程池）
             images_task = loop.run_in_executor(None, writer.stage5_images, article)
@@ -139,7 +139,7 @@ async def generate_article(request: GenerateRequest):
 
             # 阶段 6: 富文本排版
             yield sse_event('stage', {'id': 'formatting', 'status': 'active'})
-            final_output = writer.stage6_formatting(article, images)
+            final_output = await loop.run_in_executor(None, writer.stage6_formatting, article, images)
             # event_callback 用 create_task 调度，需让事件循环执行一次才能入队
             await asyncio.sleep(0)
             done_sent = False
