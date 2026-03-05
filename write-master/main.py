@@ -472,10 +472,15 @@ class WriteMaster:
 ## 写作指令
 1. 严格按照大纲结构展开，不要遗漏任何章节
 2. 每个章节按照「论点→类比→数据/案例→洞察」的段落结构写作
-3. 在大纲中标注 `[📷 配图N]` 的位置，插入对应的 `![配图N描述](images/image_0N.png)` Markdown 图片标记
-4. 配图描述要具体（10-20字），便于后续AI生图
-5. 目标受众是{audience_label}，避免过度技术细节，强调商业/产品价值
-6. 直接输出 Markdown 格式的完整文章，不要任何前言或解释"""
+3. **必须插入配图**：文章中必须包含 {length_cfg['images']} 张配图，使用格式 `![配图描述](images/image_01.png)`、`![配图描述](images/image_02.png)` 等
+   - 配图描述要具体（10-20字），例如：`![AI Agent工作流程示意图](images/image_01.png)`
+   - 配图要均匀分布在文章各章节中，不要堆在一起
+   - 图片编号从 01 开始，格式为 image_01.png, image_02.png, image_03.png
+4. 目标受众是{audience_label}，避免过度技术细节，强调商业/产品价值
+5. 直接输出 Markdown 格式的完整文章，不要任何前言或解释
+
+**重要提醒**：文章中必须包含 {length_cfg['images']} 个图片标记，格式严格为 `![描述](images/image_0N.png)`"""
+
 
         response = self.client.chat.completions.create(
             model=self.model,
