@@ -93,7 +93,9 @@ async def generate_article(request: GenerateRequest):
             research_data = await loop.run_in_executor(None, writer.stage2_research, params)
             while not event_queue.empty():
                 evt_type, evt_data = event_queue.get()
-                if evt_type == 'research_complete':
+                if evt_type == 'thinking':
+                    yield sse_event('thinking', evt_data)
+                elif evt_type == 'research_complete':
                     yield sse_event('research_complete', {'content': evt_data.get('summary', '')})
             yield sse_event('stage', {'id': 'research', 'status': 'done'})
 
@@ -102,7 +104,9 @@ async def generate_article(request: GenerateRequest):
             outline = await loop.run_in_executor(None, writer.stage3_outline, params, research_data)
             while not event_queue.empty():
                 evt_type, evt_data = event_queue.get()
-                if evt_type == 'outline_complete':
+                if evt_type == 'thinking':
+                    yield sse_event('thinking', evt_data)
+                elif evt_type == 'outline_complete':
                     yield sse_event('outline_complete', {'content': evt_data.get('outline', '')})
             yield sse_event('stage', {'id': 'outline', 'status': 'done'})
 
@@ -111,7 +115,9 @@ async def generate_article(request: GenerateRequest):
             article = await loop.run_in_executor(None, writer.stage4_writing, params, research_data, outline)
             while not event_queue.empty():
                 evt_type, evt_data = event_queue.get()
-                if evt_type == 'stream':
+                if evt_type == 'thinking':
+                    yield sse_event('thinking', evt_data)
+                elif evt_type == 'stream':
                     yield sse_event('stream', {'text': evt_data.get('text', '')})
             yield sse_event('stage', {'id': 'writing', 'status': 'done'})
 
@@ -133,7 +139,9 @@ async def generate_article(request: GenerateRequest):
 
             while not event_queue.empty():
                 evt_type, evt_data = event_queue.get()
-                if evt_type == 'image_start':
+                if evt_type == 'thinking':
+                    yield sse_event('thinking', evt_data)
+                elif evt_type == 'image_start':
                     yield sse_event('image_start', {'message': f"开始生成 {evt_data.get('count', 0)} 张配图"})
                 elif evt_type == 'image_done':
                     pass  # 前端不需要单张图片完成事件
@@ -147,7 +155,9 @@ async def generate_article(request: GenerateRequest):
             done_sent = False
             while not event_queue.empty():
                 evt_type, evt_data = event_queue.get()
-                if evt_type == 'done':
+                if evt_type == 'thinking':
+                    yield sse_event('thinking', evt_data)
+                elif evt_type == 'done':
                     yield sse_event('done', {
                         'html': evt_data.get('html', ''),
                         'title': evt_data.get('title', ''),
