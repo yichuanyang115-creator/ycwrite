@@ -23,6 +23,8 @@ out/
 # Output
 write-master/output/
 *.log
+logs.*.log
 
 # Local env
 .env.local
+cloudflared.pkg
