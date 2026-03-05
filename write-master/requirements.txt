@@ -1,0 +1,11 @@
+# FastAPI 服务依赖 (cache-bust: 2026-03-05)
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12
+pydantic==2.9.0
+
+# 继承 write-master 核心依赖
+anthropic>=0.39.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+markdown>=3.7

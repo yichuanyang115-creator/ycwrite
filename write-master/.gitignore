@@ -1,0 +1,14 @@
+# 包含敏感信息，不提交到版本库
+config.json
+.env
+
+# 生成的输出文件
+output/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 进度跟踪文件（运行时生成）
+progress.json
