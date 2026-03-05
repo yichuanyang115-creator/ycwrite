@@ -140,6 +140,9 @@ async def generate_article(request: GenerateRequest):
             # 阶段 6: 富文本排版
             yield sse_event('stage', {'id': 'formatting', 'status': 'active'})
             final_output = writer.stage6_formatting(article, images)
+            # event_callback 用 create_task 调度，需让事件循环执行一次才能入队
+            await asyncio.sleep(0)
+            done_sent = False
             while not event_queue.empty():
                 evt_type, evt_data = await event_queue.get()
                 if evt_type == 'done':
@@ -149,6 +152,22 @@ async def generate_article(request: GenerateRequest):
                         'wordCount': evt_data.get('wordCount', 0),
                         'imageCount': evt_data.get('imageCount', 0)
                     })
+                    done_sent = True
+            # 兜底：若 done 事件未入队，直接从返回值构造
+            if not done_sent:
+                from pathlib import Path as _Path
+                from scripts.markdown_to_html import extract_title as _extract_title
+                html_content = ''
+                html_path = final_output.get('html_path', '')
+                if html_path and _Path(html_path).exists():
+                    with open(html_path, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+                yield sse_event('done', {
+                    'html': html_content,
+                    'title': _extract_title(article),
+                    'wordCount': final_output.get('word_count', 0),
+                    'imageCount': final_output.get('image_count', 0)
+                })
             yield sse_event('stage', {'id': 'formatting', 'status': 'done'})
 
         except Exception as e:
