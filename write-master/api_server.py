@@ -10,6 +10,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from queue import Queue
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
@@ -72,19 +73,17 @@ async def generate_article(request: GenerateRequest):
             if request.viewpoint:
                 user_input += f"\n核心观点: {request.viewpoint}"
 
-            # 事件回调队列
-            event_queue = asyncio.Queue()
-
-            # 获取事件循环（需要在 event_callback 定义之前）
-            loop = asyncio.get_event_loop()
+            # 使用线程安全的 queue.Queue 替代 asyncio.Queue
+            event_queue = Queue()
 
             def event_callback(event_type: str, data: dict):
                 """WriteMaster 事件回调 - 线程安全版本"""
-                # 使用 call_soon_threadsafe 从线程池线程安全地调度到主事件循环
-                loop.call_soon_threadsafe(event_queue.put_nowait, (event_type, data))
+                # queue.Queue 是线程安全的，可以直接从任何线程调用
+                event_queue.put((event_type, data))
 
             # 创建 WriteMaster 实例
             writer = WriteMaster(no_review=True, event_callback=event_callback)
+            loop = asyncio.get_event_loop()
 
             # 阶段 1: 参数收集（前端没有这个阶段，跳过）
             params = await loop.run_in_executor(None, writer.stage1_collect_params, user_input)
@@ -93,7 +92,7 @@ async def generate_article(request: GenerateRequest):
             yield sse_event('stage', {'id': 'research', 'status': 'active'})
             research_data = await loop.run_in_executor(None, writer.stage2_research, params)
             while not event_queue.empty():
-                evt_type, evt_data = await event_queue.get()
+                evt_type, evt_data = event_queue.get()
                 if evt_type == 'research_complete':
                     yield sse_event('research_complete', {'content': evt_data.get('summary', '')})
             yield sse_event('stage', {'id': 'research', 'status': 'done'})
@@ -102,7 +101,7 @@ async def generate_article(request: GenerateRequest):
             yield sse_event('stage', {'id': 'outline', 'status': 'active'})
             outline = await loop.run_in_executor(None, writer.stage3_outline, params, research_data)
             while not event_queue.empty():
-                evt_type, evt_data = await event_queue.get()
+                evt_type, evt_data = event_queue.get()
                 if evt_type == 'outline_complete':
                     yield sse_event('outline_complete', {'content': evt_data.get('outline', '')})
             yield sse_event('stage', {'id': 'outline', 'status': 'done'})
@@ -111,7 +110,7 @@ async def generate_article(request: GenerateRequest):
             yield sse_event('stage', {'id': 'writing', 'status': 'active'})
             article = await loop.run_in_executor(None, writer.stage4_writing, params, research_data, outline)
             while not event_queue.empty():
-                evt_type, evt_data = await event_queue.get()
+                evt_type, evt_data = event_queue.get()
                 if evt_type == 'stream':
                     yield sse_event('stream', {'text': evt_data.get('text', '')})
             yield sse_event('stage', {'id': 'writing', 'status': 'done'})
@@ -133,7 +132,7 @@ async def generate_article(request: GenerateRequest):
                 images = await images_task
 
             while not event_queue.empty():
-                evt_type, evt_data = await event_queue.get()
+                evt_type, evt_data = event_queue.get()
                 if evt_type == 'image_start':
                     yield sse_event('image_start', {'message': f"开始生成 {evt_data.get('count', 0)} 张配图"})
                 elif evt_type == 'image_done':
@@ -143,17 +142,19 @@ async def generate_article(request: GenerateRequest):
             # 阶段 6: 富文本排版
             yield sse_event('stage', {'id': 'formatting', 'status': 'active'})
             final_output = await loop.run_in_executor(None, writer.stage6_formatting, article, images)
-            # event_callback 用 create_task 调度，需让事件循环执行一次才能入队
-            await asyncio.sleep(0)
+            # 给一点时间让 event_callback 完成
+            await asyncio.sleep(0.1)
             done_sent = False
             while not event_queue.empty():
-                evt_type, evt_data = await event_queue.get()
+                evt_type, evt_data = event_queue.get()
                 if evt_type == 'done':
                     yield sse_event('done', {
                         'html': evt_data.get('html', ''),
                         'title': evt_data.get('title', ''),
                         'wordCount': evt_data.get('wordCount', 0),
-                        'imageCount': evt_data.get('imageCount', 0)
+                        'imageCount': evt_data.get('imageCount', 0),
+                        'research': evt_data.get('research', ''),
+                        'outline': evt_data.get('outline', '')
                     })
                     done_sent = True
             # 兜底：若 done 事件未入队，直接从返回值构造
