@@ -5,9 +5,9 @@ import { AUDIENCE_LABELS } from '@/lib/prompts'
 const AUDIENCES = Object.entries(AUDIENCE_LABELS).map(([id, label]) => ({ id, label }))
 
 const LENGTHS = [
-  { id: 'short',  label: '短文',  desc: '1000-2000字',  sub: '配图 1-2 张',  icon: '⚡' },
-  { id: 'medium', label: '中篇',  desc: '2000-5000字',  sub: '配图 2-3 张',  icon: '📄', recommended: true },
-  { id: 'long',   label: '长篇',  desc: '5000字以上',   sub: '配图 5 张+',   icon: '📚' },
+  { id: 'short',  label: '短文',  desc: '1000-2000字',  sub: '配图 1 张',  icon: '⚡' },
+  { id: 'medium', label: '中篇',  desc: '2000-5000字',  sub: '配图 2 张',  icon: '📄', recommended: true },
+  { id: 'long',   label: '长篇',  desc: '5000字以上',   sub: '配图 3 张',  icon: '📚' },
 ] as const
 
 interface FormPanelProps {
